@@ -1,2 +1,4 @@
+kaggle
+pyyaml
 pandas
 numpy
