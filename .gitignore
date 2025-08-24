@@ -17,4 +17,4 @@ models/
 *.csv
 *.joblib
 *.pkl
-
+*.zip
