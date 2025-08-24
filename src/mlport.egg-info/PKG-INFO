@@ -1,0 +1,9 @@
+Metadata-Version: 2.4
+Name: mlport
+Version: 0.0.1
+Summary: Machine Learning portfolio code
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+
+#ML Portfolio
+My data science portfolio project.
