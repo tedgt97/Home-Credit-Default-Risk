@@ -18,32 +18,44 @@ from sklearn.model_selection import StratifiedKFold
 from mlport.common.data import load_any
 from mlport.common.features import split_features
 
+from sklearn.preprocessing import FunctionTransformer
+
+def _replace_inf_with_nan(X):
+    X = np.asarray(X, dtype=float)
+    X[~np.isfinite(X)] = np.nan
+    return X
+
 # Helpers
-def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int=40, corr_drop: float=0.95) -> List[str]:
+def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int = 40, corr_drop: float = 0.95) -> List[str]:
     """
-    Rank numeric cols by |corr with y|, then greedily drop any numeric that correlates with already-kept ones above corr_drop (to reduce multicollinearity).
+    Rank numeric cols by |corr with y|, then greedily drop any numeric that
+    correlates with already-kept ones above corr_drop (to reduce multicollinearity).
+    Robust to inf by converting them to NaN before corr.
     """
     num_cols = X.select_dtypes(include=[np.number]).columns.tolist()
     if not num_cols:
         return []
 
-    corrs = X[num_cols].corrwith(y).abs().sort_values(ascending=False)
+    Xn = X[num_cols].replace([np.inf, -np.inf], np.nan)
+
+    corrs = Xn.corrwith(y).abs().sort_values(ascending=False)
     ranked = corrs.index.tolist()
-    
+
     kept = []
     for c in ranked:
         if len(kept) >= top_k:
             break
         ok = True
         for k in kept:
-            cval = X[[c,k]].corr().iloc[0,1]
+            pair = Xn[[c, k]]
+            cval = pair.corr().iloc[0, 1]
             if pd.notna(cval) and abs(cval) >= corr_drop:
                 ok = False
                 break
         if ok:
             kept.append(c)
-    
     return kept
+
 
 def prevalence_threshold(y_train: pd.Series, val_probs: np.ndarray) -> float:
     """
@@ -100,12 +112,20 @@ def main():
     df = load_any(args.train)
     X_all, y_all, num_all, cat_all = split_features(df)
 
+    # quick diagnostics
+    num_all = X_all.select_dtypes(include=[np.number]).columns.tolist()
+    inf_counts = np.isinf(X_all[num_all]).sum()
+    bad = inf_counts[inf_counts > 0]
+    if len(bad):
+        print("[WARN] Columns with +/-inf detected:", bad.to_dict())
+
     # Numeric screening
     kept_num = numeric_corr_screen(X_all, y_all, top_k=args.top_k_numeric, corr_drop=args.corr_drop)
     kept_cat = [c for c in cat_all if c in X_all.columns]
 
     # Preprocessing
     num_pre = Pipeline([
+        ("fix_inf", FunctionTransformer(_replace_inf_with_nan, feature_names_out="one-to-one")),
         ("impute", SimpleImputer(strategy="median")),
         ("scale", StandardScaler()),
         ("varth", VarianceThreshold(0.0)),
