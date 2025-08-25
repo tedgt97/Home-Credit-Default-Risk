@@ -14,7 +14,7 @@ from tqdm.auto import tqdm
 
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
-from sklearn.preprocessing import OneHotEncoder, StandardScaler, FunctionTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 from sklearn.pipeline import Pipeline
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.ensemble import RandomForestClassifier
@@ -23,14 +23,10 @@ from sklearn.model_selection import StratifiedKFold
 
 from mlport.common.data import load_any
 from mlport.common.features import split_features
+from mlport.common.preprocess import ReplaceInfWithNaN
 
 
 # Helpers
-def _replace_inf_with_nan(X):
-    X = np.asarray(X, dtype=float)
-    X[~np.isfinite(X)] = np.nan
-    return X
-
 def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int=40, corr_drop: float=0.95) -> List[str]:
     """
     Rank numeric cols by |corr with y|, then greedily drop any numeric that correlates with already-kept ones above corr_drop (to reduce multicollinearity).
@@ -130,9 +126,8 @@ def main():
 
     tqdm.write("[RF] Building preprocessors and model...")
     num_pre = Pipeline([
-        ("fix_inf", FunctionTransformer(_replace_inf_with_nan, feature_names_out="one-to-one")),
+        ("fix_inf", ReplaceInfWithNaN()),
         ("impute", SimpleImputer(strategy="median")),
-        # RF does not need scaling, but harmless; remove StandardScaler()
         ("varth", VarianceThreshold(0.0)),
     ])
     cat_pre = Pipeline([

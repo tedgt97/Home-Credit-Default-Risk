@@ -18,13 +18,8 @@ from sklearn.model_selection import StratifiedKFold
 
 from mlport.common.data import load_any
 from mlport.common.features import split_features
+from mlport.common.preprocess import ReplaceInfWithNaN
 
-from sklearn.preprocessing import FunctionTransformer
-
-def _replace_inf_with_nan(X):
-    X = np.asarray(X, dtype=float)
-    X[~np.isfinite(X)] = np.nan
-    return X
 
 # Helpers
 def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int = 40, corr_drop: float = 0.95) -> List[str]:
@@ -133,7 +128,7 @@ def main():
     # Preprocessing
     tqdm.write("[LOGREG] Building preprocessors and model...")
     num_pre = Pipeline([
-        ("fix_inf", FunctionTransformer(_replace_inf_with_nan, feature_names_out="one-to-one")),
+        ("fix_inf", ReplaceInfWithNaN()),
         ("impute", SimpleImputer(strategy="median")),
         ("scale", StandardScaler()),
         ("varth", VarianceThreshold(0.0)),
