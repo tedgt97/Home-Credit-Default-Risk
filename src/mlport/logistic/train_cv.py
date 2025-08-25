@@ -1,4 +1,4 @@
-import argparse, json, math
+import argparse, json
 from pathlib import Path
 from typing import List
 import numpy as np
@@ -16,7 +16,7 @@ from sklearn.metrics import roc_auc_score, roc_curve, precision_recall_fscore_su
 from sklearn.model_selection import StratifiedKFold
 
 from mlport.common.data import load_any
-from mlport.common.features import split_features, TARGET, IDCOLS
+from mlport.common.features import split_features
 
 # Helpers
 def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int=40, corr_drop: float=0.95) -> List[str]:
@@ -45,7 +45,7 @@ def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int=40, corr_drop:
     
     return kept
 
-def prevalence_threshold(y_train: pd.Series, val_probs: np.ndarra) -> float:
+def prevalence_threshold(y_train: pd.Series, val_probs: np.ndarray) -> float:
     """
     Choose threshold so predicted positive rate ~= actual prevalence on the training fold.
     """
@@ -77,7 +77,7 @@ def save_roc_plot(y_true: np.ndarray, y_prob: np.ndarray, out_path: Path, title:
 
 # Trainer
 def main():
-    ap = argparse.ArgumentParser(description="Logistic Regression (Startified CV) with numeric screnning + L1 sparsity")
+    ap = argparse.ArgumentParser(description="Logistic Regression (Stratified CV) with numeric screening + L1 sparsity")
     ap.add_argument("--train", default="data/processed/train.parquet")
     ap.add_argument("--models_dir", default="models")
     ap.add_argument("--reports_dir", default="reports")
@@ -163,11 +163,13 @@ def main():
     # Export non-zero coefficients for transparency
     # build feature names after preprocessing
     # numeric: kept_num (VarianceThreshold may remove constants but does not rename)
-    num_out = kept_num
+    num_varth = final_pipe.named_steps['pre'].named_transformers_['num'].named_steps['varth']
+    support = num_varth.get_support()
+    num_out = [c for c, keep in zip(kept_num, support) if keep]
     # categorical: names from OneHotEncoder
     if kept_cat:
         ohe = final_pipe.named_steps['pre'].named_transformers_['cat'].named_steps['onehot']
-        cat_out = ohe.get_features_names_out(kept_cat).tolist()
+        cat_out = ohe.get_feature_names_out(kept_cat).tolist()
     else:
         cat_out = []
     feat_names = np.array(num_out + cat_out)
