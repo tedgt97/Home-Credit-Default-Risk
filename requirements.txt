@@ -2,3 +2,6 @@ kaggle
 pyyaml
 pandas
 numpy
+pyarrow
+fastparquet
+openpyxl
