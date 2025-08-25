@@ -4,7 +4,11 @@ from typing import List
 import numpy as np
 import pandas as pd
 import joblib
+
+import matplotlib
+matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
 
 from tqdm.auto import tqdm
 
