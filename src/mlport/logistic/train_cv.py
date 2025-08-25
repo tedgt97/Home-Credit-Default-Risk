@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
+from tqdm.auto import tqdm
 
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
@@ -42,10 +43,12 @@ def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int = 40, corr_dro
     ranked = corrs.index.tolist()
 
     kept = []
-    for c in ranked:
+    # outer loop: candidate ranking
+    for c in tqdm(ranked, desc="Screening numerics", leave=False):
         if len(kept) >= top_k:
             break
         ok = True
+        # inner loop: check correlation with already kept
         for k in kept:
             pair = Xn[[c, k]]
             cval = pair.corr().iloc[0, 1]
@@ -55,6 +58,7 @@ def numeric_corr_screen(X: pd.DataFrame, y: pd.Series, top_k: int = 40, corr_dro
         if ok:
             kept.append(c)
     return kept
+
 
 
 def prevalence_threshold(y_train: pd.Series, val_probs: np.ndarray) -> float:
@@ -109,7 +113,9 @@ def main():
 
 
     # Load data
+    tqdm.write("[LOGREG] Loading data...")
     df = load_any(args.train)
+    tqdm.write("[LOGREG] Splitting features...")
     X_all, y_all, num_all, cat_all = split_features(df)
 
     # quick diagnostics
@@ -120,10 +126,12 @@ def main():
         print("[WARN] Columns with +/-inf detected:", bad.to_dict())
 
     # Numeric screening
+    tqdm.write("[LOGREG] Running numeric screening...")
     kept_num = numeric_corr_screen(X_all, y_all, top_k=args.top_k_numeric, corr_drop=args.corr_drop)
     kept_cat = [c for c in cat_all if c in X_all.columns]
 
     # Preprocessing
+    tqdm.write("[LOGREG] Building preprocessors and model...")
     num_pre = Pipeline([
         ("fix_inf", FunctionTransformer(_replace_inf_with_nan, feature_names_out="one-to-one")),
         ("impute", SimpleImputer(strategy="median")),
@@ -152,11 +160,14 @@ def main():
     oof_proba = np.zeros(len(X_all), dtype=float)
     fold_rows = []
 
-    for fold, (tr_idx, va_idx) in enumerate(skf.split(X_all, y_all), start = 1):
+    for fold, (tr_idx, va_idx) in enumerate(tqdm(skf.split(X_all, y_all), total=args.folds, desc="CV folds"), start=1):
         X_tr, X_va = X_all.iloc[tr_idx], X_all.iloc[va_idx]
         y_tr, y_va = y_all.iloc[tr_idx], y_all.iloc[va_idx]
 
         pipe = Pipeline([("pre", pre), ("clf", clf)])
+
+        # Fit with a per‑fold status
+        tqdm.write(f"[LOGREG] Fitting fold {fold}...")
         pipe.fit(X_tr, y_tr)
 
         proba_va = pipe.predict_proba(X_va)[:, 1]
@@ -165,17 +176,20 @@ def main():
 
         m = metrics_for(y_va.to_numpy(), proba_va, thr)
         fold_rows.append({"fold": fold, **m})
-        print(f"[LOGREG][FOLD {fold}] AUC={m['auc']:.4f} F1={m['f1']:.4f} Thr={m['threshold']:.3f}")
+        tqdm.write(f"[LOGREG][FOLD {fold}] AUC={m['auc']:.4f} F1={m['f1']:.4f} Thr={m['threshold']:.3f}")
 
         save_roc_plot(y_va.to_numpy(), proba_va, figs_dir / f"logreg_fold{fold}_roc.png", f"LogReg Fold {fold} ROC")
 
+
     # Overall OOF metrics (use mean threshold for reporting)
+    tqdm.write("[LOGREG] Computing OOF metrics and saving plots...")
     avg_thr = float(np.mean([r["threshold"] for r in fold_rows])) if fold_rows else 0.5
     overall = metrics_for(y_all.to_numpy(), oof_proba, avg_thr)
     print(f"[LOGREG] OOF AUC={overall['auc']:.4f} F1={overall['f1']:.4f} Thr~={avg_thr:.3f}")
     save_roc_plot(y_all.to_numpy(), oof_proba, figs_dir / "logreg_oof_roc.png", "LogReg OOF ROC")
 
     # Refit on full train & save model
+    tqdm.write("[LOGREG] Refit on full data and exporting artifacts...")
     final_pipe = Pipeline([('pre', pre), ('clf', clf)])
     final_pipe.fit(X_all, y_all)
     joblib.dump(final_pipe, models_dir / "logreg_cv.joblib")
