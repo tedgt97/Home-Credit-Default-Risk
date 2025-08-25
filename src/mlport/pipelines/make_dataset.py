@@ -62,6 +62,9 @@ def build_and_save(raw_dir: Path, out_dir: Path) -> None:
     # Filter Issues out of train
     train_clean = filter_out_issues(train_clean)
 
+    print(f"[INFO] Filter Out training: "
+          f"train={train_clean.shape}, test={test_clean.shape}")
+
     # Save to Parquet
     save_parquet(train_clean, out_dir / "train.parquet")
     save_parquet(test_clean,  out_dir / "test.parquet")
