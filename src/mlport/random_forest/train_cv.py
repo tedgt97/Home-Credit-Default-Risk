@@ -179,6 +179,15 @@ def main():
 
         save_roc_plot(y_va.to_numpy(), proba_va, figs_dir / f"rf_fold{fold}_roc.png", f"RF Fold {fold} ROC")
 
+     # Save OOF probabilities for ensembling
+    oof_df = pd.DataFrame({
+        "idx": np.arange(len(X_all)),
+        "y_true": y_all.to_numpy(),
+        "y_prob_rf": oof_proba,
+    })
+    oof_df.to_csv(metrics_dir / "rf_oof_probs.csv", index=False)
+
+
     avg_thr = float(np.mean([r["threshold"] for r in fold_rows])) if fold_rows else 0.5
     overall = metrics_for(y_all.to_numpy(), oof_proba, avg_thr)
     tqdm.write(f"[RF] OOF AUC={overall['auc']:.4f} F1={overall['f1']:.4f} Thr~={avg_thr:.3f}")

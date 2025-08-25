@@ -179,7 +179,14 @@ def main():
         tqdm.write(f"[LOGREG][FOLD {fold}] AUC={m['auc']:.4f} F1={m['f1']:.4f} Thr={m['threshold']:.3f}")
 
         save_roc_plot(y_va.to_numpy(), proba_va, figs_dir / f"logreg_fold{fold}_roc.png", f"LogReg Fold {fold} ROC")
-
+    
+    # Save OOF probabilities for ensembling
+    oof_df = pd.DataFrame({
+        "idx": np.arange(len(X_all)),
+        "y_true": y_all.to_numpy(),
+        "y_prob_logreg": oof_proba,
+    })
+    oof_df.to_csv(metrics_dir / "logreg_oof_probs.csv", index=False)
 
     # Overall OOF metrics (use mean threshold for reporting)
     tqdm.write("[LOGREG] Computing OOF metrics and saving plots...")
