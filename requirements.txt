@@ -1,3 +1,4 @@
+pandas
 kaggle
 pyyaml
 pandas
@@ -5,3 +6,6 @@ numpy
 pyarrow
 fastparquet
 openpyxl
+scikit-learn
+joblib
+matplotlib
