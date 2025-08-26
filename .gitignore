@@ -12,10 +12,8 @@ env/
 # Data & models
 data/processed/
 data/raw/
-reports/
 models/
 *.parquet
-*.csv
 *.joblib
 *.pkl
 *.zip
