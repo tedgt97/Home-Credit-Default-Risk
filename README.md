@@ -1,4 +1,5 @@
 # Home Credit Default Risk
+GitHub Directory: https://github.com/tedgt97/Home-Credit-Default-Risk
 
 This repository implements a full **end-to-end machine learning pipeline** for the [Home Credit Default Risk](https://www.kaggle.com/competitions/home-credit-default-risk) competition.  
 The goal is to predict the probability that a client will default on a loan, based on demographic, financial, and credit history data.
