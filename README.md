@@ -15,7 +15,7 @@ The project covers:
 ---
 
 ## 📂 Repository Structure
-
+```
 home-credit-default-risk/
 │
 ├── data/
@@ -39,7 +39,7 @@ home-credit-default-risk/
 ├── requirements.txt # Python dependencies
 ├── pyproject.toml # Project metadata
 └── README.md
-
+```
 
 ---
 
