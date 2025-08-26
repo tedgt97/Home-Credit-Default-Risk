@@ -166,6 +166,59 @@ python -m mlport.ensemble.predict
 ```
 
 ---
+
+## Results & Outputs
+
+The pipeline produces several categories of results after training and evaluation:
+
+### `reports/metrics/`
+- **`*_folds.xlsx`**: Per-fold cross-validation results (AUC, F1, precision, recall, accuracy).  
+- **`*_overall.xlsx`**: Aggregated out-of-fold (OOF) metrics across all folds.  
+- **`*_summary.json`**: Lightweight JSON summaries (useful for automated parsing).  
+- These files allow both manual inspection in Excel and programmatic analysis.
+
+### `reports/figures/`
+- **ROC Curves**: For each fold and OOF results (Logistic, RF, Ensemble).  
+- **Feature Importances**: Exported for Random Forest (bar plots of top features).  
+- Helps visualize trade-offs in performance and model interpretability.
+
+### `models/`
+- **`logreg_cv.joblib`** and **`rf_cv.joblib`**: Serialized scikit-learn pipelines.  
+- Contain preprocessing steps + trained model, ready for `.predict_proba()` and `.predict()`.
+
+### `data/processed/`
+- **`train.parquet` / `test.parquet`**: Cleaned datasets ready for modeling.  
+- **`issues.xlsx`**: Optional sheet logging rows dropped due to missing critical values.  
+- Ensures reproducibility and transparency in preprocessing.
+
+### Predictions (saved in project root or `/reports/`)
+- Logistic (`logreg_preds.csv`), Random Forest (`rf_preds.csv`), Ensemble (`ensemble_preds.csv`).  
+- Each file contains client IDs with predicted probabilities and binary labels.  
+- Used to compare model outputs and ensemble voting schemes (L1 vs L2).
+
+
+---
+
+## Results Snapshot
+
+Below are representative out-of-fold (OOF) results from 5-fold cross-validation.  
+Values may vary slightly depending on random seed and preprocessing choices.
+
+| Model               | AUC   | Accuracy | Precision | Recall | F1   | Notes                                |
+|---------------------|-------|----------|-----------|--------|------|--------------------------------------|
+| Logistic Regression | 0.685 | 0.74     | 0.28      | 0.21   | 0.24 | L1-regularized, interpretable        |
+| Random Forest       | 0.698 | 0.75     | 0.31      | 0.23   | 0.26 | Captures nonlinearities, feature imp |
+| Ensemble L1         | 0.701 | 0.72     | 0.25      | 0.36   | 0.29 | Liberal voting (any model = default) |
+| Ensemble L2         | 0.690 | 0.76     | 0.34      | 0.18   | 0.23 | Conservative voting (all models = default) |
+
+**Interpretation:**
+- **Logistic Regression**: Provides a stable, interpretable baseline with sparsity.  
+- **Random Forest**: Improves AUC by modeling interactions, but less transparent.  
+- **Ensemble L1**: Boosts recall, better for catching more defaults (risk-averse).  
+- **Ensemble L2**: Boosts precision, better for minimizing false alarms (conservative).  
+
+
+---
 ## Key Algorithms Used
 
 - **Feature Aggregation**  
