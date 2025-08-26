@@ -14,7 +14,7 @@ The project covers:
 
 ---
 
-## 📂 Repository Structure
+## Repository Structure
 ```
 home-credit-default-risk/
 │
