@@ -205,12 +205,12 @@ The pipeline produces several categories of results after training and evaluatio
 Below are representative out-of-fold (OOF) results from 5-fold cross-validation.  
 Values may vary slightly depending on random seed and preprocessing choices.
 
-| Model               | AUC   | Accuracy | Precision | Recall | F1   | Notes                                |
-|---------------------|-------|----------|-----------|--------|------|--------------------------------------|
-| Logistic Regression | 0.685 | 0.74     | 0.28      | 0.21   | 0.24 | L1-regularized, interpretable        |
-| Random Forest       | 0.698 | 0.75     | 0.31      | 0.23   | 0.26 | Captures nonlinearities, feature imp |
-| Ensemble L1         | 0.701 | 0.72     | 0.25      | 0.36   | 0.29 | Liberal voting (any model = default) |
-| Ensemble L2         | 0.690 | 0.76     | 0.34      | 0.18   | 0.23 | Conservative voting (all models = default) |
+| Model               | AUC   | Accuracy | Precision | Recall | F1    | Notes                                      |
+|---------------------|-------|----------|-----------|--------|-------|--------------------------------------------|
+| Logistic Regression | 0.691 | 0.877    | 0.213     | 0.214  | 0.214 | L1-regularized, interpretable              |
+| Random Forest       | 0.690 | 0.878    | 0.221     | 0.221  | 0.221 | Captures nonlinearities, feature imp       |
+| Ensemble L1         | 0.698 | 0.877    | 0.222     | 0.227  | 0.224 | Liberal voting (any model = default)       |
+| Ensemble L2         | 0.699 | 0.878    | 0.225     | 0.225  | 0.225 | Conservative voting (all models = default) |
 
 **Interpretation:**
 - **Logistic Regression**: Provides a stable, interpretable baseline with sparsity.  
